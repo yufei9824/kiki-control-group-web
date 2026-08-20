@@ -190,12 +190,21 @@ function handleCategoryButtonClick(cat) {
   startAudio({ ...item, category: cat.id, categoryLabel: cat.label });
 }
 
+// A play() promise rejects with AbortError when a near-simultaneous pause()
+// or src change interrupts it (e.g. user hits pause right after clicking a
+// category, before playback has actually started) — that's expected browser
+// behavior, not a real failure, so it must not be treated as one.
+function isAbortError(err) {
+  return err && err.name === "AbortError";
+}
+
 function startAudio(item) {
   currentAudioItem = item;
   audioPlayer.src = item.src;
   resetProgressUI();
   pendingFreshStart = true;
   audioPlayer.play().catch((err) => {
+    if (isAbortError(err)) return;
     pendingFreshStart = false;
     currentAudioItem = null;
     console.error("音频播放失败:", err);
@@ -233,7 +242,10 @@ audioPlayer.addEventListener("loadedmetadata", updateProgressUI);
 function togglePause() {
   if (!currentAudioItem) return;
   if (audioPlayer.paused) {
-    audioPlayer.play().catch((err) => console.error("恢复播放失败:", err));
+    audioPlayer.play().catch((err) => {
+      if (isAbortError(err)) return;
+      console.error("恢复播放失败:", err);
+    });
   } else {
     audioPlayer.pause();
   }
