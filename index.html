@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,18 +12,18 @@
 
   <!-- Step 1: ID entry -->
   <section id="id-screen" class="card">
-    <h1>参与者登录</h1>
-    <p class="hint">请输入你的参与者 ID 以开始任务</p>
+    <h1>參與者登入</h1>
+    <p class="hint">請輸入你的參與者 ID 以開始任務</p>
     <form id="id-form">
       <input type="text" id="user-id-input" placeholder="例如 P001" autocomplete="off" required>
-      <button type="submit">开始</button>
+      <button type="submit">開始</button>
     </form>
   </section>
 
   <!-- Step 2: task screen -->
   <section id="task-screen" class="card hidden">
-    <h1>音频任务</h1>
-    <p class="hint">当前参与者:<strong id="current-user-id"></strong> <button id="switch-user-btn" class="link-btn">切换</button></p>
+    <h1>音頻任務</h1>
+    <p class="hint">當前參與者:<strong id="current-user-id"></strong> <button id="switch-user-btn" class="link-btn">切換</button></p>
 
     <div id="audio-buttons" class="button-grid"></div>
 
@@ -34,7 +34,7 @@
       </div>
       <progress id="audio-progress" class="audio-progress" value="0" max="1"></progress>
       <div class="now-playing-controls">
-        <button id="pause-btn" type="button">暂停</button>
+        <button id="pause-btn" type="button">暫停</button>
         <button id="stop-btn" type="button" class="stop-btn">停止</button>
       </div>
     </div>
@@ -45,25 +45,25 @@
   <!-- Debug / data panel -->
   <section id="debug-panel" class="card debug-panel">
     <div class="debug-header">
-      <h2>记录数据(本地调试用)</h2>
+      <h2>記錄資料(本地除錯用)</h2>
       <div class="debug-actions">
-        <button id="export-json-btn">导出 JSON</button>
-        <button id="export-csv-btn">导出 CSV</button>
-        <button id="clear-log-btn" class="danger-btn">清空记录</button>
+        <button id="export-json-btn">匯出 JSON</button>
+        <button id="export-csv-btn">匯出 CSV</button>
+        <button id="clear-log-btn" class="danger-btn">清空記錄</button>
       </div>
     </div>
-    <p class="hint">这些记录目前只存在浏览器本地(localStorage),尚未连接云端数据库。接入方法见 README。</p>
+    <p class="hint">這些記錄目前只存在瀏覽器本地(localStorage),尚未連接雲端資料庫。接入方法見 README。</p>
     <div class="table-wrap">
       <table id="log-table">
         <thead>
           <tr>
-            <th>时间</th>
-            <th>用户 ID</th>
+            <th>時間</th>
+            <th>用戶 ID</th>
             <th>事件</th>
-            <th>类别</th>
-            <th>音频</th>
-            <th>时长(秒)</th>
-            <th>音频总时长(秒)</th>
+            <th>類別</th>
+            <th>音頻</th>
+            <th>時長(秒)</th>
+            <th>音頻總時長(秒)</th>
           </tr>
         </thead>
         <tbody id="log-table-body"></tbody>

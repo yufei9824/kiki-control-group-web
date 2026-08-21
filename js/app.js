@@ -9,23 +9,23 @@
 const AUDIO_CATEGORIES = [
   {
     id: "A",
-    label: "静观饮食",
+    label: "靜觀飲食",
     items: [
-      { id: "A1", label: "静观饮食", src: "audio/A/A1.mp3" },
+      { id: "A1", label: "靜觀飲食", src: "audio/A/A1.mp3" },
     ],
   },
   {
     id: "B",
-    label: "身体扫描",
+    label: "身體掃描",
     items: [
-      { id: "B1", label: "身体扫描", src: "audio/B/B1.mp3" },
+      { id: "B1", label: "身體掃描", src: "audio/B/B1.mp3" },
     ],
   },
   {
     id: "C",
-    label: "静观呼吸",
+    label: "靜觀呼吸",
     items: [
-      { id: "C1", label: "静观呼吸", src: "audio/C/C1.mp3" },
+      { id: "C1", label: "靜觀呼吸", src: "audio/C/C1.mp3" },
     ],
   },
 ];
@@ -170,7 +170,7 @@ function handleCategoryButtonClick(cat) {
 
   const item = pickRandomItem(cat);
   if (!item) {
-    alert(`${cat.label} 里还没有配置任何音频。`);
+    alert(`${cat.label} 裡還沒有配置任何音頻。`);
     return;
   }
   logEvent({ eventType: "click", category: cat.id, audioId: item.id });
@@ -202,7 +202,7 @@ function startAudio(item) {
     pendingFreshStart = false;
     currentAudioItem = null;
     console.error("音频播放失败:", err);
-    alert(`无法播放 ${item.label}(${item.src})。请确认音频文件存在。`);
+    alert(`無法播放 ${item.label}(${item.src})。請確認音頻文件存在。`);
     updatePlayingUI();
   });
 }
@@ -299,8 +299,8 @@ function updatePlayingUI() {
   const activeBtn = audioButtonsEl.querySelector(`[data-id="${currentAudioItem.category}"]`);
   activeBtn?.classList.add("playing");
   const isPaused = audioPlayer.paused;
-  nowPlayingLabelEl.textContent = `${isPaused ? "已暂停" : "正在播放"}: ${currentAudioItem.categoryLabel}`;
-  pauseBtn.textContent = isPaused ? "继续" : "暂停";
+  nowPlayingLabelEl.textContent = `${isPaused ? "已暫停" : "正在播放"}: ${currentAudioItem.categoryLabel}`;
+  pauseBtn.textContent = isPaused ? "繼續" : "暫停";
   nowPlayingEl.classList.remove("hidden");
 }
 
@@ -345,7 +345,7 @@ function renderLogTable() {
   if (log.length === 0) {
     const row = document.createElement("tr");
     row.className = "empty-row";
-    row.innerHTML = `<td colspan="7">暂无记录</td>`;
+    row.innerHTML = `<td colspan="7">暫無記錄</td>`;
     logTableBody.appendChild(row);
     return;
   }
@@ -399,7 +399,7 @@ exportCsvBtn.addEventListener("click", () => {
 });
 
 clearLogBtn.addEventListener("click", () => {
-  if (confirm("确定要清空本地记录吗?此操作无法撤销(可先导出备份)。")) {
+  if (confirm("確定要清空本地記錄嗎?此操作無法撤銷(可先匯出備份)。")) {
     saveLog([]);
     renderLogTable();
   }
