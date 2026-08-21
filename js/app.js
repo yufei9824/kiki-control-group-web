@@ -88,7 +88,7 @@ async function logEvent({ eventType, category = "", audioId = "", duration = nul
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     userId: currentUserId,
     timestamp: new Date().toISOString(),
-    eventType, // 'session_start' | 'click' | 'play_start' | 'play_end'
+    eventType, // 'session_start' | 'click' | 'play_start' | 'pause' | 'resume' | 'play_end'
     category, // 'A' | 'B' | 'C'
     audioId, // e.g. 'A1' — which specific clip was (randomly) picked
     duration, // seconds actually listened, only set on play_end
@@ -235,13 +235,28 @@ audioPlayer.addEventListener("loadedmetadata", updateProgressUI);
 
 function togglePause() {
   if (!currentAudioItem) return;
+  const position = Math.round((audioPlayer.currentTime || 0) * 100) / 100;
   if (audioPlayer.paused) {
     audioPlayer.play().catch((err) => {
       if (isAbortError(err)) return;
       console.error("恢复播放失败:", err);
     });
+    logEvent({
+      eventType: "resume",
+      category: currentAudioItem.category,
+      audioId: currentAudioItem.id,
+      duration: position,
+      totalDuration: getTotalDuration(),
+    });
   } else {
     audioPlayer.pause();
+    logEvent({
+      eventType: "pause",
+      category: currentAudioItem.category,
+      audioId: currentAudioItem.id,
+      duration: position,
+      totalDuration: getTotalDuration(),
+    });
   }
 }
 
