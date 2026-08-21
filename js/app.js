@@ -9,29 +9,23 @@
 const AUDIO_CATEGORIES = [
   {
     id: "A",
-    label: "A 类",
+    label: "静观饮食",
     items: [
-      { id: "A1", label: "A1", src: "audio/A/A1.mp3" },
-      { id: "A2", label: "A2", src: "audio/A/A2.mp3" },
-      { id: "A3", label: "A3", src: "audio/A/A3.mp3" },
+      { id: "A1", label: "静观饮食", src: "audio/A/A1.mp3" },
     ],
   },
   {
     id: "B",
-    label: "B 类",
+    label: "身体扫描",
     items: [
-      { id: "B1", label: "B1", src: "audio/B/B1.mp3" },
-      { id: "B2", label: "B2", src: "audio/B/B2.mp3" },
-      { id: "B3", label: "B3", src: "audio/B/B3.mp3" },
+      { id: "B1", label: "身体扫描", src: "audio/B/B1.mp3" },
     ],
   },
   {
     id: "C",
-    label: "C 类",
+    label: "静观呼吸",
     items: [
-      { id: "C1", label: "C1", src: "audio/C/C1.mp3" },
-      { id: "C2", label: "C2", src: "audio/C/C2.mp3" },
-      { id: "C3", label: "C3", src: "audio/C/C3.mp3" },
+      { id: "C1", label: "静观呼吸", src: "audio/C/C1.mp3" },
     ],
   },
 ];
