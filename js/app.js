@@ -39,7 +39,7 @@ const STORAGE_KEY_USER = "kiki_current_user";
 // (only a specific signed-in Google account can read the "events"
 // collection), so this string being guessed or shared is not a security
 // concern by itself.
-const ADMIN_USER_ID = "admin27666388";
+const ADMIN_USER_ID = "admin";
 
 // ---------------------------------------------------------------------------
 // State

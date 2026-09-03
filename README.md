@@ -89,14 +89,14 @@ service cloud.firestore {
 
 ## 管理面板(查看所有参与者的数据)
 
-在 ID 输入框里输入 `admin27666388`(这个字符串本身不是密码,只是用来打开管理面板入口——真正的门禁是下面这步的 Google 登录),会进入一个管理页面,点"使用 Google 帳號登入"、用授权账号登录后,会从 Firestore 读出**所有参与者的全部记录**,按日期分组、每个日期下再按参与者分组显示,并且可以匯出全部资料的 JSON/CSV。
+在 ID 输入框里输入 `admin`(这个字符串本身不是密码,只是用来打开管理面板入口——真正的门禁是下面这步的 Google 登录),会进入一个管理页面,点"使用 Google 帳號登入"、用授权账号登录后,会从 Firestore 读出**所有参与者的全部记录**,按日期分组、每个日期下再按参与者分组显示,并且可以匯出全部资料的 JSON/CSV。
 
 **这一步需要你在 Firebase 控制台做两件事(我没法代替你操作):**
 
 1. 打开 [Firebase 控制台 → Authentication](https://console.firebase.google.com/project/kiki-control-group/authentication/providers) → 如果是第一次用,先点 "Get started"。在 "Sign-in method" 标签页里,点 **Google**,打开启用开关,填一下 "Project support email"(选你自己的邮箱就行),保存。
 2. 打开 [Firebase 控制台 → Firestore → Rules](https://console.firebase.google.com/project/kiki-control-group/firestore/rules),把内容整个替换成上面"安全规则"那一段(邮箱要改成你自己实际登录用的那个 Google 账号),点 **发布(Publish)**。
 
-做完这两步,去网站上用 `admin27666388` 登录、点 Google 登录按钮,应该就能看到数据了。如果登录后显示"沒有查看資料的權限",说明你登录的 Google 账号跟规则里写的邮箱不一致——用规则里指定的那个账号登录,或者告诉我要改成哪个邮箱。
+做完这两步,去网站上用 `admin` 登录、点 Google 登录按钮,应该就能看到数据了。如果登录后显示"沒有查看資料的權限",说明你登录的 Google 账号跟规则里写的邮箱不一致——用规则里指定的那个账号登录,或者告诉我要改成哪个邮箱。
 
 ## 记录的数据结构
 
