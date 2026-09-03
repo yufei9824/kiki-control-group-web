@@ -33,6 +33,14 @@ const AUDIO_CATEGORIES = [
 const STORAGE_KEY_LOG = "kiki_event_log";
 const STORAGE_KEY_USER = "kiki_current_user";
 
+// Entering this exact string on the ID screen opens the admin data view
+// instead of the task screen. It is NOT a password — it's just a routing
+// trigger. The actual access control is Firebase Auth + Firestore rules
+// (only a specific signed-in Google account can read the "events"
+// collection), so this string being guessed or shared is not a security
+// concern by itself.
+const ADMIN_USER_ID = "admin27666388";
+
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
@@ -57,10 +65,18 @@ const progressEl = document.getElementById("audio-progress");
 const pauseBtn = document.getElementById("pause-btn");
 const stopBtn = document.getElementById("stop-btn");
 const audioPlayer = document.getElementById("audio-player");
-const logTableBody = document.getElementById("log-table-body");
-const exportJsonBtn = document.getElementById("export-json-btn");
-const exportCsvBtn = document.getElementById("export-csv-btn");
-const clearLogBtn = document.getElementById("clear-log-btn");
+
+const adminScreen = document.getElementById("admin-screen");
+const adminSwitchBtn = document.getElementById("admin-switch-btn");
+const adminSigninEl = document.getElementById("admin-signin");
+const adminGoogleBtn = document.getElementById("admin-google-btn");
+const adminStatusEl = document.getElementById("admin-status");
+const adminDataEl = document.getElementById("admin-data");
+const adminSummaryEl = document.getElementById("admin-summary");
+const adminGroupsEl = document.getElementById("admin-groups");
+const adminRefreshBtn = document.getElementById("admin-refresh-btn");
+const adminExportJsonBtn = document.getElementById("admin-export-json-btn");
+const adminExportCsvBtn = document.getElementById("admin-export-csv-btn");
 
 // Resolves once the Firebase module script (in index.html) has finished
 // initializing, or after 3s if it never does (offline, blocked, bad config)
@@ -80,11 +96,12 @@ const firebaseReady = new Promise((resolve) => {
 // Logging
 //
 // logEvent() is the single choke point for recording data: every entry is
-// written to localStorage (so the debug panel always works, even offline)
-// and, when the Firebase SDK loaded successfully (see the <script type=
-// "module"> block in index.html), also to the "events" collection in
-// Firestore. Firestore's security rules only allow `create` — this page
-// can never read, edit, or delete existing records, only add new ones.
+// written to localStorage (a silent local backup, no UI — kept in case a
+// participant is offline) and, when the Firebase SDK loaded successfully
+// (see the <script type="module"> block in index.html), also to the
+// "events" collection in Firestore. Firestore's security rules only allow
+// `create` for anonymous requests — reading requires signing in as the
+// authorized admin account (see the admin screen below).
 // ---------------------------------------------------------------------------
 function loadLog() {
   try {
@@ -125,7 +142,6 @@ async function logEvent({ eventType, category = "", audioId = "", duration = nul
     }
   }
 
-  renderLogTable();
   return entry;
 }
 
@@ -137,30 +153,54 @@ function showTaskScreen(userId) {
   sessionStorage.setItem(STORAGE_KEY_USER, userId);
   currentUserIdEl.textContent = userId;
   idScreen.classList.add("hidden");
+  adminScreen.classList.add("hidden");
   taskScreen.classList.remove("hidden");
   logEvent({ eventType: "session_start" });
+}
+
+function showAdminScreen() {
+  sessionStorage.setItem(STORAGE_KEY_USER, ADMIN_USER_ID);
+  idScreen.classList.add("hidden");
+  taskScreen.classList.add("hidden");
+  adminScreen.classList.remove("hidden");
+  adminSigninEl.classList.remove("hidden");
+  adminDataEl.classList.add("hidden");
+  adminStatusEl.textContent = "";
+}
+
+function returnToIdScreen() {
+  stopPlayback(); // logs a play_end if something was mid-playback; no-op from the admin screen
+  currentUserId = null;
+  sessionStorage.removeItem(STORAGE_KEY_USER);
+  userIdInput.value = "";
+  taskScreen.classList.add("hidden");
+  adminScreen.classList.add("hidden");
+  idScreen.classList.remove("hidden");
+  userIdInput.focus();
+  if (window._signOutAuth) window._signOutAuth().catch(() => {});
 }
 
 idForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const val = userIdInput.value.trim();
   if (!val) return;
-  showTaskScreen(val);
+  if (val === ADMIN_USER_ID) {
+    showAdminScreen();
+  } else {
+    showTaskScreen(val);
+  }
 });
 
-switchUserBtn.addEventListener("click", () => {
-  stopPlayback(); // logs a play_end if something was mid-playback
-  currentUserId = null;
-  sessionStorage.removeItem(STORAGE_KEY_USER);
-  userIdInput.value = "";
-  taskScreen.classList.add("hidden");
-  idScreen.classList.remove("hidden");
-  userIdInput.focus();
-});
+switchUserBtn.addEventListener("click", returnToIdScreen);
+adminSwitchBtn.addEventListener("click", returnToIdScreen);
 
-// Resume the same user within a browser session (e.g. accidental reload)
+// Resume the same screen within a browser session (e.g. accidental reload)
 const savedUser = sessionStorage.getItem(STORAGE_KEY_USER);
-if (savedUser) showTaskScreen(savedUser);
+if (savedUser === ADMIN_USER_ID) {
+  showAdminScreen();
+} else if (savedUser) {
+  showTaskScreen(savedUser);
+}
 
 // ---------------------------------------------------------------------------
 // Audio buttons
@@ -358,34 +398,131 @@ pauseBtn.addEventListener("click", togglePause);
 stopBtn.addEventListener("click", stopPlayback);
 
 // ---------------------------------------------------------------------------
-// Debug panel: table + export + clear
+// Admin data view — Google-sign-in gated (see index.html / README). Once
+// signed in as the authorized account, fetches every participant's records
+// from Firestore and groups them by date, then by user within each date.
 // ---------------------------------------------------------------------------
-function renderLogTable() {
-  const log = loadLog().slice().reverse(); // newest first
-  logTableBody.innerHTML = "";
+let adminEvents = []; // flat list from the last successful load; feeds the export buttons
 
-  if (log.length === 0) {
-    const row = document.createElement("tr");
-    row.className = "empty-row";
-    row.innerHTML = `<td colspan="7">暫無記錄</td>`;
-    logTableBody.appendChild(row);
+async function fetchAndRenderAdminData() {
+  adminStatusEl.textContent = "正在讀取所有記錄...";
+  try {
+    const snap = await window._fsGetDocs(window._fsCollection(window._db, "events"));
+    adminEvents = [];
+    snap.forEach((doc) => adminEvents.push(doc.data()));
+    renderAdminData(adminEvents);
+    adminSigninEl.classList.add("hidden");
+    adminDataEl.classList.remove("hidden");
+    adminStatusEl.textContent = "";
+  } catch (err) {
+    adminStatusEl.textContent =
+      err.code === "permission-denied"
+        ? "讀取失敗:這個 Google 帳號沒有查看資料的權限。"
+        : `讀取失敗:${err.code || err.message}`;
+  }
+}
+
+async function signInAndLoadAdminData() {
+  if (!window._signInWithGoogle) {
+    adminStatusEl.textContent = "Firebase 尚未載入完成,請稍後再試一次。";
+    return;
+  }
+  adminStatusEl.textContent = "登入中...";
+  try {
+    await window._signInWithGoogle();
+  } catch (err) {
+    adminStatusEl.textContent = `登入失敗:${err.code || err.message}`;
+    return;
+  }
+  await fetchAndRenderAdminData();
+}
+
+function renderAdminData(events) {
+  const byDate = new Map();
+  events.forEach((entry) => {
+    const date = (entry.timestamp || "").slice(0, 10) || "(未知日期)";
+    if (!byDate.has(date)) byDate.set(date, new Map());
+    const byUser = byDate.get(date);
+    const uid = entry.userId || "(未知用戶)";
+    if (!byUser.has(uid)) byUser.set(uid, []);
+    byUser.get(uid).push(entry);
+  });
+
+  const dates = [...byDate.keys()].sort().reverse(); // newest date first
+  const userCount = new Set(events.map((e) => e.userId)).size;
+  adminSummaryEl.textContent = `共 ${events.length} 條記錄・${dates.length} 天・${userCount} 位用戶`;
+
+  adminGroupsEl.innerHTML = "";
+  if (dates.length === 0) {
+    adminGroupsEl.innerHTML = `<p class="hint">目前還沒有任何記錄。</p>`;
     return;
   }
 
-  log.forEach((entry) => {
-    const row = document.createElement("tr");
-    const time = new Date(entry.timestamp).toLocaleString();
-    row.innerHTML = `
-      <td>${time}</td>
-      <td>${escapeHtml(entry.userId ?? "")}</td>
-      <td>${escapeHtml(entry.eventType)}</td>
-      <td>${escapeHtml(entry.category || "-")}</td>
-      <td>${escapeHtml(entry.audioId || "-")}</td>
-      <td>${entry.duration ?? "-"}</td>
-      <td>${entry.totalDuration ?? "-"}</td>
-    `;
-    logTableBody.appendChild(row);
+  dates.forEach((date) => {
+    const dateSection = document.createElement("div");
+    dateSection.className = "admin-date-group";
+
+    const dateHeading = document.createElement("h3");
+    dateHeading.className = "admin-date-title";
+    dateHeading.textContent = date;
+    dateSection.appendChild(dateHeading);
+
+    const byUser = byDate.get(date);
+    [...byUser.keys()].sort().forEach((uid) => {
+      const userEvents = byUser
+        .get(uid)
+        .slice()
+        .sort((a, b) => (a.timestamp || "").localeCompare(b.timestamp || ""));
+
+      const userSection = document.createElement("div");
+      userSection.className = "admin-user-group";
+
+      const userHeading = document.createElement("h4");
+      userHeading.className = "admin-user-title";
+      userHeading.textContent = `${uid}(${userEvents.length} 條記錄)`;
+      userSection.appendChild(userHeading);
+
+      userSection.appendChild(buildEventsTable(userEvents));
+      dateSection.appendChild(userSection);
+    });
+
+    adminGroupsEl.appendChild(dateSection);
   });
+}
+
+function buildEventsTable(events) {
+  const wrap = document.createElement("div");
+  wrap.className = "table-wrap";
+  const table = document.createElement("table");
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>時間</th>
+        <th>事件</th>
+        <th>類別</th>
+        <th>音頻</th>
+        <th>時長(秒)</th>
+        <th>音頻總時長(秒)</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${events
+        .map(
+          (e) => `
+        <tr>
+          <td>${e.timestamp ? new Date(e.timestamp).toLocaleTimeString() : "-"}</td>
+          <td>${escapeHtml(e.eventType || "")}</td>
+          <td>${escapeHtml(e.category || "-")}</td>
+          <td>${escapeHtml(e.audioId || "-")}</td>
+          <td>${e.duration ?? "-"}</td>
+          <td>${e.totalDuration ?? "-"}</td>
+        </tr>`
+        )
+        .join("")}
+    </tbody>
+  `;
+  wrap.appendChild(table);
+  return wrap;
 }
 
 function escapeHtml(str) {
@@ -406,29 +543,22 @@ function downloadFile(filename, content, mimeType) {
   URL.revokeObjectURL(url);
 }
 
-exportJsonBtn.addEventListener("click", () => {
-  const log = loadLog();
-  downloadFile(`kiki-log-${Date.now()}.json`, JSON.stringify(log, null, 2), "application/json");
+adminGoogleBtn.addEventListener("click", signInAndLoadAdminData);
+adminRefreshBtn.addEventListener("click", fetchAndRenderAdminData);
+
+adminExportJsonBtn.addEventListener("click", () => {
+  downloadFile(`kiki-all-events-${Date.now()}.json`, JSON.stringify(adminEvents, null, 2), "application/json");
 });
 
-exportCsvBtn.addEventListener("click", () => {
-  const log = loadLog();
+adminExportCsvBtn.addEventListener("click", () => {
   const header = "timestamp,userId,eventType,category,audioId,duration,totalDuration";
-  const rows = log.map((e) =>
+  const rows = adminEvents.map((e) =>
     [e.timestamp, e.userId, e.eventType, e.category, e.audioId, e.duration ?? "", e.totalDuration ?? ""].join(",")
   );
-  downloadFile(`kiki-log-${Date.now()}.csv`, [header, ...rows].join("\n"), "text/csv");
-});
-
-clearLogBtn.addEventListener("click", () => {
-  if (confirm("確定要清空本地記錄嗎?此操作無法撤銷(可先匯出備份)。")) {
-    saveLog([]);
-    renderLogTable();
-  }
+  downloadFile(`kiki-all-events-${Date.now()}.csv`, [header, ...rows].join("\n"), "text/csv");
 });
 
 // ---------------------------------------------------------------------------
 // Init
 // ---------------------------------------------------------------------------
 renderAudioButtons();
-renderLogTable();

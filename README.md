@@ -5,7 +5,8 @@
 ## 目前的状态
 
 - 前端是纯静态 HTML/CSS/JS,没有任何构建步骤。
-- 数据记录会同时写两份:浏览器本地 `localStorage`(页面底部"记录数据"面板可查看、导出 JSON/CSV、清空,方便随时调试)、以及云端 **Firebase Firestore**(项目 `kiki-control-group`,数据库节点选在 **香港(asia-east2)**)。云端这边是**只进不出**——安全规则只允许 `create`,前端本身读不到、改不了、删不掉任何记录,真正查看/导出正式数据要去 [Firebase 控制台](https://console.firebase.google.com/project/kiki-control-group/firestore) 的 `events` 集合里看。
+- 数据记录会同时写两份:浏览器本地 `localStorage`(纯粹是离线时的静默备份,**没有任何 UI 显示**)、以及云端 **Firebase Firestore**(项目 `kiki-control-group`,数据库节点选在 **香港(asia-east2)**)。
+- 参与者页面上**看不到任何记录数据**——之前调试用的"記錄資料"面板已经拿掉了。只有输入管理员 ID 才会看到管理面板,而且还要用授权的 Google 账号登入才能真正读到数据,详见下面"管理面板"一节。
 - 三个类别(内部代号 A/B/C)现在各接了一条真实的静观练习音频:A=静观饮食(约 10 分钟)、B=身体扫描(约 21 分钟)、C=静观呼吸(约 3 分钟)。每类目前只有 1 条,后续往对应的 `audio/A/`、`audio/B/`、`audio/C/` 文件夹里加文件、再在配置里加一行即可扩充。
 
 ## 本地预览
@@ -74,18 +75,28 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /events/{eventId} {
       allow create: if true;
-      allow read, update, delete: if false;
+      allow read: if request.auth != null && request.auth.token.email == 'brucelou46@gmail.com';
+      allow update, delete: if false;
     }
   }
 }
 ```
-只允许新增,不允许读/改/删——因为 Firebase 的前端 config 本质是公开的(部署出去的静态代码谁都能看到),安全边界必须靠这份规则,不能靠"藏起来 key"。这也意味着**网页本身、包括你自己在浏览器里,都读不到已收集的数据**,只能去 Firebase 控制台里查看导出,这是有意为之。
-
-**查看/导出正式数据**:[Firebase 控制台](https://console.firebase.google.com/project/kiki-control-group/firestore/databases/-default-/data) → Firestore Database → `events` 集合,每条记录的字段跟下面"记录的数据结构"一节一致。控制台支持按字段筛选、也可以用 Firebase CLI (`firebase firestore:export`) 批量导出。
+任何人都能新增一条记录(参与者不需要登录),但**读取只对指定的那一个 Google 账号开放**——因为 Firebase 的前端 config 本质是公开的(部署出去的静态代码谁都能看到),安全边界必须靠这份规则本身,不能靠"藏起来 key"或"前端判断用户名"这种表面功夫。规则里的邮箱要跟你在 Firebase Authentication 里实际登录用的 Google 账号完全一致,如果不是 `brucelou46@gmail.com`,告诉我,我再改。
 
 **如果以后想换项目/换后端**:只需要改 `index.html` 里的 `firebaseConfig`(换 Firebase 项目),或者改 `js/app.js` 的 `logEvent()` 里 `window._fsAddDoc(...)` 那一行(换成 Supabase、Google Sheets Apps Script 或自己的服务器接口)——其他代码都不用动。
 
-> 调试时注意:测试产生的记录(比如用 `TEST`、`localtest` 之类的 ID)也会真的写进 Firestore,正式收集数据前记得去控制台清一下测试数据。
+> 调试时注意:测试产生的记录(比如用 `TEST`、`localtest` 之类的 ID)也会真的写进 Firestore,正式收集数据前记得在管理面板里确认一下、必要时去 Firebase 控制台清掉测试数据。
+
+## 管理面板(查看所有参与者的数据)
+
+在 ID 输入框里输入 `admin27666388`(这个字符串本身不是密码,只是用来打开管理面板入口——真正的门禁是下面这步的 Google 登录),会进入一个管理页面,点"使用 Google 帳號登入"、用授权账号登录后,会从 Firestore 读出**所有参与者的全部记录**,按日期分组、每个日期下再按参与者分组显示,并且可以匯出全部资料的 JSON/CSV。
+
+**这一步需要你在 Firebase 控制台做两件事(我没法代替你操作):**
+
+1. 打开 [Firebase 控制台 → Authentication](https://console.firebase.google.com/project/kiki-control-group/authentication/providers) → 如果是第一次用,先点 "Get started"。在 "Sign-in method" 标签页里,点 **Google**,打开启用开关,填一下 "Project support email"(选你自己的邮箱就行),保存。
+2. 打开 [Firebase 控制台 → Firestore → Rules](https://console.firebase.google.com/project/kiki-control-group/firestore/rules),把内容整个替换成上面"安全规则"那一段(邮箱要改成你自己实际登录用的那个 Google 账号),点 **发布(Publish)**。
+
+做完这两步,去网站上用 `admin27666388` 登录、点 Google 登录按钮,应该就能看到数据了。如果登录后显示"沒有查看資料的權限",说明你登录的 Google 账号跟规则里写的邮箱不一致——用规则里指定的那个账号登录,或者告诉我要改成哪个邮箱。
 
 ## 记录的数据结构
 

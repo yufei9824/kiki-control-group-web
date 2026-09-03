@@ -42,32 +42,28 @@
     <audio id="audio-player"></audio>
   </section>
 
-  <!-- Debug / data panel -->
-  <section id="debug-panel" class="card debug-panel">
-    <div class="debug-header">
-      <h2>記錄資料(本地除錯用)</h2>
-      <div class="debug-actions">
-        <button id="export-json-btn">匯出 JSON</button>
-        <button id="export-csv-btn">匯出 CSV</button>
-        <button id="clear-log-btn" class="danger-btn">清空記錄</button>
-      </div>
+  <!-- Admin data view: only reachable by entering the admin ID on the ID screen -->
+  <section id="admin-screen" class="card hidden">
+    <h1>管理員資料檢視</h1>
+    <p class="hint">僅供研究人員查看所有參與者的記錄 <button id="admin-switch-btn" class="link-btn">切換</button></p>
+
+    <div id="admin-signin" class="admin-block">
+      <p class="hint">請用授權的 Google 帳號登入才能查看資料(Firestore 規則只允許指定帳號讀取)。</p>
+      <button id="admin-google-btn" type="button">使用 Google 帳號登入</button>
+      <p id="admin-status" class="hint"></p>
     </div>
-    <p class="hint">這些記錄目前只存在瀏覽器本地(localStorage),尚未連接雲端資料庫。接入方法見 README。</p>
-    <div class="table-wrap">
-      <table id="log-table">
-        <thead>
-          <tr>
-            <th>時間</th>
-            <th>用戶 ID</th>
-            <th>事件</th>
-            <th>類別</th>
-            <th>音頻</th>
-            <th>時長(秒)</th>
-            <th>音頻總時長(秒)</th>
-          </tr>
-        </thead>
-        <tbody id="log-table-body"></tbody>
-      </table>
+
+    <div id="admin-data" class="admin-block hidden">
+      <div class="debug-header">
+        <h2>全部參與者記錄</h2>
+        <div class="debug-actions">
+          <button id="admin-refresh-btn" type="button">重新整理</button>
+          <button id="admin-export-json-btn" type="button">匯出全部 JSON</button>
+          <button id="admin-export-csv-btn" type="button">匯出全部 CSV</button>
+        </div>
+      </div>
+      <p id="admin-summary" class="hint"></p>
+      <div id="admin-groups"></div>
     </div>
   </section>
 
@@ -75,7 +71,8 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBwyIB9yamSUaexJBtim_3fqCkbzmoM1XA",
@@ -90,6 +87,16 @@
   window._db = getFirestore(app);
   window._fsAddDoc = addDoc;
   window._fsCollection = collection;
+  window._fsGetDocs = getDocs;
+
+  // Admin-only data view: gated by real Firebase Auth (Google sign-in), not
+  // just a magic ID string — Firestore's rules check request.auth.token.email,
+  // so only the authorized account can actually read the "events" collection.
+  const auth = getAuth(app);
+  const googleProvider = new GoogleAuthProvider();
+  window._signInWithGoogle = () => signInWithPopup(auth, googleProvider);
+  window._signOutAuth = () => signOut(auth);
+
   window.dispatchEvent(new Event("firebase-ready"));
 </script>
 <script src="js/app.js"></script>

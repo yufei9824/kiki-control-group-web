@@ -189,7 +189,29 @@ button:hover { background: var(--primary-hover); }
 }
 .stop-btn:hover { background: var(--danger-hover); }
 
-.debug-panel { font-size: 0.9rem; }
+.admin-block { font-size: 0.9rem; }
+.admin-block.hidden { display: none; }
+
+#admin-status:empty { margin: 0; }
+
+.admin-date-group { margin-top: 24px; }
+.admin-date-group:first-child { margin-top: 0; }
+
+.admin-date-title {
+  font-size: 1rem;
+  margin: 0 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--border);
+}
+
+.admin-user-group { margin: 0 0 16px 4px; }
+
+.admin-user-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0 0 6px;
+}
 
 .debug-header {
   display: flex;
@@ -241,10 +263,6 @@ th {
 }
 
 tbody tr:last-child td { border-bottom: none; }
-
-#log-table-body:empty::after {
-  content: "";
-}
 
 .empty-row td {
   color: var(--text-muted);
