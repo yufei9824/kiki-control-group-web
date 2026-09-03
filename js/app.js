@@ -62,14 +62,29 @@ const exportJsonBtn = document.getElementById("export-json-btn");
 const exportCsvBtn = document.getElementById("export-csv-btn");
 const clearLogBtn = document.getElementById("clear-log-btn");
 
+// Resolves once the Firebase module script (in index.html) has finished
+// initializing, or after 3s if it never does (offline, blocked, bad config)
+// — logEvent() awaits this once so an event fired the instant the page
+// loads doesn't lose its cloud write just because the module was still
+// fetching from the CDN.
+const firebaseReady = new Promise((resolve) => {
+  if (window._fsAddDoc) {
+    resolve(true);
+    return;
+  }
+  window.addEventListener("firebase-ready", () => resolve(true), { once: true });
+  setTimeout(() => resolve(false), 3000);
+});
+
 // ---------------------------------------------------------------------------
 // Logging
 //
-// logEvent() is the single choke point for recording data. Right now it
-// writes to localStorage so the framework is testable with zero backend
-// setup. To wire up real persistence (recommended: Firebase Firestore),
-// add the write call where marked below — every call site in this file
-// stays the same.
+// logEvent() is the single choke point for recording data: every entry is
+// written to localStorage (so the debug panel always works, even offline)
+// and, when the Firebase SDK loaded successfully (see the <script type=
+// "module"> block in index.html), also to the "events" collection in
+// Firestore. Firestore's security rules only allow `create` — this page
+// can never read, edit, or delete existing records, only add new ones.
 // ---------------------------------------------------------------------------
 function loadLog() {
   try {
@@ -99,9 +114,16 @@ async function logEvent({ eventType, category = "", audioId = "", duration = nul
   log.push(entry);
   saveLog(log);
 
-  // --- TODO: send to a real backend instead of / in addition to localStorage ---
-  // Example with Firebase Firestore (after adding the SDK + config, see README):
-  //   await addDoc(collection(db, "events"), entry);
+  // Cloud write is best-effort: local storage above already has the entry,
+  // so a slow/unready/unreachable Firebase must never block or crash logging.
+  await firebaseReady;
+  if (window._fsAddDoc) {
+    try {
+      await window._fsAddDoc(window._fsCollection(window._db, "events"), entry);
+    } catch (err) {
+      console.error("写入云端数据库失败(本地记录不受影响):", err);
+    }
+  }
 
   renderLogTable();
   return entry;

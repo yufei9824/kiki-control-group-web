@@ -5,7 +5,7 @@
 ## 目前的状态
 
 - 前端是纯静态 HTML/CSS/JS,没有任何构建步骤。
-- 数据记录目前写入浏览器的 `localStorage`,只存在于当前设备/浏览器里,**还没有连接云端数据库**。页面底部的"记录数据"面板可以查看、导出(JSON/CSV)、清空这些本地记录,方便你现在就测试整个流程。
+- 数据记录会同时写两份:浏览器本地 `localStorage`(页面底部"记录数据"面板可查看、导出 JSON/CSV、清空,方便随时调试)、以及云端 **Firebase Firestore**(项目 `kiki-control-group`,数据库节点选在 **香港(asia-east2)**)。云端这边是**只进不出**——安全规则只允许 `create`,前端本身读不到、改不了、删不掉任何记录,真正查看/导出正式数据要去 [Firebase 控制台](https://console.firebase.google.com/project/kiki-control-group/firestore) 的 `events` 集合里看。
 - 三个类别(内部代号 A/B/C)现在各接了一条真实的静观练习音频:A=静观饮食(约 10 分钟)、B=身体扫描(约 21 分钟)、C=静观呼吸(约 3 分钟)。每类目前只有 1 条,后续往对应的 `audio/A/`、`audio/B/`、`audio/C/` 文件夹里加文件、再在配置里加一行即可扩充。
 
 ## 本地预览
@@ -63,41 +63,29 @@ const AUDIO_CATEGORIES = [
 - `label`:按钮上显示的文字。
 - `src`:音频文件路径,真实文件放进对应的 `audio/A/`、`audio/B/`、`audio/C/` 文件夹里。
 
-## 接入真正的后端数据库(推荐 Firebase)
+## 后端数据库(Firebase,已接入)
 
-现在的记录逻辑全部收拢在 `js/app.js` 的 `logEvent()` 函数里,所以接入真实后端时只需要改这一个函数,不用动其他代码。
+已经接好了,不用再配置。记录逻辑全部收拢在 `js/app.js` 的 `logEvent()` 函数里——每条事件先写 `localStorage`,再(best-effort、不阻塞、不影响本地记录)写一份到 Firestore 的 `events` 集合。Firebase 初始化和 config 在 `index.html` 的 `<script type="module">` 块里。
 
-推荐用 **Firebase Firestore**,原因是免费额度够用、不需要自己管服务器、直接在前端 JS 里几行代码就能写库,和纯静态网站(GitHub Pages)天然契合。步骤:
+**安全规则**(在 Firebase 控制台 → Firestore → Rules 里设置的):
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /events/{eventId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+  }
+}
+```
+只允许新增,不允许读/改/删——因为 Firebase 的前端 config 本质是公开的(部署出去的静态代码谁都能看到),安全边界必须靠这份规则,不能靠"藏起来 key"。这也意味着**网页本身、包括你自己在浏览器里,都读不到已收集的数据**,只能去 Firebase 控制台里查看导出,这是有意为之。
 
-1. 去 https://console.firebase.google.com 免费创建一个项目(需要一个 Google 账号 —— 这一步需要你自己完成,我没法替你注册账号)。
-2. 项目里启用 **Firestore Database**(选"测试模式"先跑起来,正式收集数据前记得把安全规则改严格一点)。
-3. 在项目设置里新建一个 Web App,拿到形如下面的 config:
-   ```js
-   const firebaseConfig = {
-     apiKey: "...",
-     authDomain: "...",
-     projectId: "...",
-     // ...
-   };
-   ```
-4. 在 `index.html` 的 `</body>` 前加入 Firebase SDK(用 CDN 的 modular 写法):
-   ```html
-   <script type="module">
-     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-     import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+**查看/导出正式数据**:[Firebase 控制台](https://console.firebase.google.com/project/kiki-control-group/firestore/databases/-default-/data) → Firestore Database → `events` 集合,每条记录的字段跟下面"记录的数据结构"一节一致。控制台支持按字段筛选、也可以用 Firebase CLI (`firebase firestore:export`) 批量导出。
 
-     const app = initializeApp(firebaseConfig);
-     window._db = getFirestore(app);
-     window._fsAddDoc = addDoc;
-     window._fsCollection = collection;
-   </script>
-   ```
-5. 在 `js/app.js` 的 `logEvent()` 里,把标了 `TODO` 的地方换成:
-   ```js
-   await window._fsAddDoc(window._fsCollection(window._db, "events"), entry);
-   ```
+**如果以后想换项目/换后端**:只需要改 `index.html` 里的 `firebaseConfig`(换 Firebase 项目),或者改 `js/app.js` 的 `logEvent()` 里 `window._fsAddDoc(...)` 那一行(换成 Supabase、Google Sheets Apps Script 或自己的服务器接口)——其他代码都不用动。
 
-这样每条事件(session_start / click / play_start / play_end)就会同时写本地和云端。之后想换 Supabase、Google Sheets(Apps Script)或者你自己的服务器接口,思路一样——都只改 `logEvent()` 这一处。
+> 调试时注意:测试产生的记录(比如用 `TEST`、`localtest` 之类的 ID)也会真的写进 Firestore,正式收集数据前记得去控制台清一下测试数据。
 
 ## 记录的数据结构
 

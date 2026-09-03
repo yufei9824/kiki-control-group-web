@@ -73,6 +73,25 @@
 
 </div>
 
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBwyIB9yamSUaexJBtim_3fqCkbzmoM1XA",
+    authDomain: "kiki-control-group.firebaseapp.com",
+    projectId: "kiki-control-group",
+    storageBucket: "kiki-control-group.firebasestorage.app",
+    messagingSenderId: "945418463084",
+    appId: "1:945418463084:web:08d6f86e884002345f3549"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  window._db = getFirestore(app);
+  window._fsAddDoc = addDoc;
+  window._fsCollection = collection;
+  window.dispatchEvent(new Event("firebase-ready"));
+</script>
 <script src="js/app.js"></script>
 </body>
 </html>
