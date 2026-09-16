@@ -12,6 +12,12 @@ const AUDIO_CATEGORIES = [
     label: "靜觀飲食",
     items: [
       { id: "A1", label: "靜觀飲食", src: "audio/A/A1.mp3" },
+      { id: "A2", label: "10分鐘靜觀飲食練習 （mark）", src: "audio/A/A2.mp3" },
+      { id: "A3", label: "11分鐘回想親人的祝福（Mark）", src: "audio/A/A3.mp3" },
+      { id: "A4", label: "11分鐘聯想山脈的景象及細節（mark）", src: "audio/A/A4.mp3" },
+      { id: "A5", label: "14分鐘靜觀靜坐的練習湖水的冥想 (廣東話) Lake Meditation【hongkongcancerfund】", src: "audio/A/A5.mp3" },
+      { id: "A6", label: "5分鐘 用靜觀方法品嚐食物的第一啖【330life 】", src: "audio/A/A6.mp3" },
+      { id: "A7", label: "6分鐘靜顴品嚐練習【330 newlife】", src: "audio/A/A7.mp3" },
     ],
   },
   {
@@ -19,6 +25,14 @@ const AUDIO_CATEGORIES = [
     label: "身體掃描",
     items: [
       { id: "B1", label: "身體掃描", src: "audio/B/B1.mp3" },
+      { id: "B2", label: "10分鐘靜觀伸展練習【newlife330】", src: "audio/B/B2.mp3" },
+      { id: "B3", label: "10分鐘靜觀身體掃描【香港復康會】", src: "audio/B/B3.mp3" },
+      { id: "B4", label: "11分鐘放鬆並感受下肢（mark）", src: "audio/B/B4.mp3" },
+      { id: "B5", label: "12分鐘掃描下肢練習（mark）", src: "audio/B/B5.mp3" },
+      { id: "B6", label: "15分鐘配合呼吸伸展身體（mark）", src: "audio/B/B6.mp3" },
+      { id: "B7", label: "7分鐘站立左右拉伸（mark）", src: "audio/B/B7.mp3" },
+      { id: "B8", label: "8分鐘 靜觀伸展手臂【香港復康會】", src: "audio/B/B8.mp3" },
+      { id: "B9", label: "8分鐘冥想及身體掃描練習【Dr. Sam Brain & Psychology 大腦及心理教室】", src: "audio/B/B9.mp3" },
     ],
   },
   {
@@ -26,6 +40,16 @@ const AUDIO_CATEGORIES = [
     label: "靜觀呼吸",
     items: [
       { id: "C1", label: "靜觀呼吸", src: "audio/C/C1.mp3" },
+      { id: "C2", label: "10分鐘專注呼吸引導冥想【冥想小貓】", src: "audio/C/C2.mp3" },
+      { id: "C3", label: "10分鐘靜坐_ 靜觀身體與呼吸練習 (廣東話) 【Samantha Yung Mindfulness 靜觀 · 修心 】", src: "audio/C/C3.mp3" },
+      { id: "C4", label: "10分鐘靜坐及靜觀練習【明愛牛頭角長者中心】", src: "audio/C/C4.mp3" },
+      { id: "C5", label: "11分鐘覺知身體各部位感覺 （Mark）", src: "audio/C/C5.mp3" },
+      { id: "C6", label: "12分鐘散步呼吸練習及冥想【Ava Siu Yoga 瑜伽.冥想.廣東話】", src: "audio/C/C6.mp3" },
+      { id: "C7", label: "3分鐘靜觀呼吸練習【香港復康會】", src: "audio/C/C7.mp3" },
+      { id: "C8", label: "3分钟呼吸空間靜觀練習(Mark)", src: "audio/C/C8.mp3" },
+      { id: "C9", label: "5分鐘三步呼吸空間靜觀練習(廣東話)【Samantha Yung Mindfulness 靜觀 · 修心 】", src: "audio/C/C9.mp3" },
+      { id: "C10", label: "5分鐘助眠安神靜觀練習【MindfulOcean，KarsonWong】", src: "audio/C/C10.mp3" },
+      { id: "C11", label: "5分鐘應對緊張擔心靜觀練習 【PSY時間｜心理港播】", src: "audio/C/C11.mp3" },
     ],
   },
 ];
