@@ -11,7 +11,6 @@ const AUDIO_CATEGORIES = [
     id: "A",
     label: "靜觀飲食",
     items: [
-      { id: "A1", label: "靜觀飲食", src: "audio/A/A1.mp3" },
       { id: "A2", label: "10分鐘靜觀飲食練習 （mark）", src: "audio/A/A2.mp3" },
       { id: "A3", label: "11分鐘回想親人的祝福（Mark）", src: "audio/A/A3.mp3" },
       { id: "A4", label: "11分鐘聯想山脈的景象及細節（mark）", src: "audio/A/A4.mp3" },
@@ -24,7 +23,6 @@ const AUDIO_CATEGORIES = [
     id: "B",
     label: "身體掃描",
     items: [
-      { id: "B1", label: "身體掃描", src: "audio/B/B1.mp3" },
       { id: "B2", label: "10分鐘靜觀伸展練習【newlife330】", src: "audio/B/B2.mp3" },
       { id: "B3", label: "10分鐘靜觀身體掃描【香港復康會】", src: "audio/B/B3.mp3" },
       { id: "B4", label: "11分鐘放鬆並感受下肢（mark）", src: "audio/B/B4.mp3" },
@@ -39,7 +37,6 @@ const AUDIO_CATEGORIES = [
     id: "C",
     label: "靜觀呼吸",
     items: [
-      { id: "C1", label: "靜觀呼吸", src: "audio/C/C1.mp3" },
       { id: "C2", label: "10分鐘專注呼吸引導冥想【冥想小貓】", src: "audio/C/C2.mp3" },
       { id: "C3", label: "10分鐘靜坐_ 靜觀身體與呼吸練習 (廣東話) 【Samantha Yung Mindfulness 靜觀 · 修心 】", src: "audio/C/C3.mp3" },
       { id: "C4", label: "10分鐘靜坐及靜觀練習【明愛牛頭角長者中心】", src: "audio/C/C4.mp3" },
